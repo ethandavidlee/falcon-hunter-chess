@@ -845,5 +845,3 @@ class Chessboard:
             chessboard_representation += "\n"  # insert a new line after each row
         return chessboard_representation
 
-
-
