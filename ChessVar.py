@@ -68,12 +68,11 @@ class ChessVar:
             not, along with a message prompting the current player to try again.
         """
         if self.get_game_state() != 'UNFINISHED':
-            print('game over')
             return False
         elif not self.valid_move(current_position, new_position):
             return False
         else:
-            print('move from',current_position,'to',new_position,'complete')
+#            print('move from',current_position,'to',new_position,'complete')
             self._game_board.chessboard_position(current_position, new_position)
             self.set_game_state()
             self.turn_order()
@@ -90,18 +89,18 @@ class ChessVar:
         new_position_obj = BoardSquare(new_position_str)
 
         if current_piece.get_color() != self.get_turn():
-            print('not',current_piece.get_color(),'turn')
+        #    print('not',current_piece.get_color(),'turn')
             return False
         elif not self._game_board._board_square.check_valid_square(new_position_str):
             # Check if the new position is not a valid square
-            print('this position is not on the board')
+         #   print('this position is not on the board')
             return False
         elif not current_piece.valid_moves(current_position_obj, new_position_obj):
             # check that the piece's move method allows if to move between the two squares
-            print('piece cannot move here')
+         #   print('piece cannot move here')
             return False
         elif not self.valid_journey(current_position_obj, new_position_obj, current_piece):
-            print('journey not valid')
+          #  print('journey not valid')
             return False
         else:
             return True
@@ -262,7 +261,7 @@ class ChessVar:
         position = BoardSquare(entry_position)
 
         if self.get_game_state() != 'UNFINISHED':
-            print('game finished')
+         #   print('game finished')
             return False
 
         if fairy_piece == 'H' or fairy_piece == 'F':
@@ -270,7 +269,7 @@ class ChessVar:
         if fairy_piece == 'f' or fairy_piece == 'h':
             piece_color = 'black'
         if self.get_turn() != piece_color:
-            print('not piece turn')
+         #   print('not piece turn')
             return False
 
         off_board_pieces = []
@@ -278,23 +277,23 @@ class ChessVar:
             for piece in self._game_board.get_chessboard_dict()['off_board_white']:
                 off_board_pieces.append(piece.get_name())
                 if fairy_piece not in off_board_pieces:
-                    print('piece already entered')
+                 #   print('piece already entered')
                     return False
         if piece_color == 'black':
             for piece in self._game_board.get_chessboard_dict()['off_board_black']:
                 off_board_pieces.append(piece.get_name())
                 if fairy_piece not in off_board_pieces:
-                    print('piece already entered')
+                  #  print('piece already entered')
                     return False
 
         entry_row = position.get_row()
         if piece_color == 'white':
             if entry_row != 1 and entry_row != 2:
-                print("Can't enter fairy piece on this row")
+              #  print("Can't enter fairy piece on this row")
                 return False
         if piece_color == 'black':
             if entry_row != 8 and entry_row != 8:
-                print("Can't enter fairy piece on this row")
+             #   print("Can't enter fairy piece on this row")
                 return False
 
         fairy_count = 0
@@ -319,7 +318,7 @@ class ChessVar:
             return False
 
         if self._game_board.get_chessboard_dict()[entry_position]:
-            print('not empty')
+          #  print('not empty')
             return False
         else:
             return True
@@ -539,8 +538,9 @@ class Pawn(ChessPiece):
     rows to define the pieces movement methods. Communicates with Chessboard for to be added to the chessboard
     dictionary at the relevant position key. Communicates with ChessVar to share the pieces movement methodology.
     """
-    def __init__(self, color, name):
+    def __init__(self, color, name, chessboard):
         super().__init__(color, "pawn", name)
+        self._chessboard = chessboard
 
     def valid_moves(self, current_square, new_square):
         """
@@ -549,16 +549,23 @@ class Pawn(ChessPiece):
         """
         current_column = current_square.get_column()
         current_row = current_square.get_row()
-    #    print('current row ' + str(current_row))
 
         new_column = new_square.get_column()
         new_row = new_square.get_row()
-   #     print('new row ' + str(new_row))
 
         column_difference = abs(new_column - current_column)
- #       print('column diff ' + str(column_difference))
         row_difference = abs(new_row - current_row)
- #       print('row diff ' + str(row_difference))
+
+        # if there is a piece at the new square straight ahead (because pawns can't take forward)
+        if column_difference == 0 and self._chessboard.get_chessboard_dict()[new_square.get_square()]:
+            return False
+
+        # if there is a piece diagonal one, the pawn can move and take it
+        if column_difference == 1 and self._chessboard.get_chessboard_dict()[new_square.get_square()]:
+            if self._color == 'white' and (new_row - current_row == 1):
+                return True
+            if self._color == 'black' and (new_row - current_row == -1):
+                return True
 
         if (self.get_color() == 'white' and current_square.get_row() == 2) or (self.get_color() == 'black' and
                                                                                current_square.get_row() == 7):
@@ -706,7 +713,7 @@ class Chessboard:
         self.place_piece(white_knight, 'g1')
         self.place_piece(white_rook, 'h1')
 
-        white_pawn = Pawn(color='white', name='P')
+        white_pawn = Pawn(color='white', name='P', chessboard=self)
         self.place_piece(white_pawn, 'a2')
         self.place_piece(white_pawn, 'b2')
         self.place_piece(white_pawn, 'c2')
@@ -752,7 +759,7 @@ class Chessboard:
         self.place_piece(None, 'g6')
         self.place_piece(None, 'h6')
 
-        black_pawn = Pawn(color='black', name='p')
+        black_pawn = Pawn(color='black', name='p', chessboard=self)
         self.place_piece(black_pawn, 'a7')
         self.place_piece(black_pawn, 'b7')
         self.place_piece(black_pawn, 'c7')
@@ -839,43 +846,4 @@ class Chessboard:
         return chessboard_representation
 
 
-game = ChessVar()
-game.make_move('c2', 'c4')
-game.make_move('a7', 'a6')
-game.make_move('d1', 'c2')
-game.make_move('a6', 'a5')
-game.make_move('c2', 'e4')
-game.make_move('a5', 'a4')
-game.make_move('e4', 'b7')
-game.make_move('a4', 'a3')
-game.make_move('b7', 'e4')
-game.make_move('h7', 'h6')
-game.make_move('e4', 'h7')
-game.make_move('h6', 'h5')
-game.make_move('h7', 'c2')
-state = game.get_game_state()
 
-# print board post testing
-my_chessboard = game._game_board.show_chessboard()
-print(my_chessboard)
-my_off_board_whites = [piece.get_name() for piece in game._game_board.get_chessboard_dict()['off_board_white']]
-my_off_board_blacks = [piece.get_name() for piece in game._game_board.get_chessboard_dict()['off_board_black']]
-print('Off_board: ' + str(my_off_board_whites) + ' ' + str(my_off_board_blacks))
-
-taken_white_object = game._game_board.get_chessboard_dict()['taken_white']
-if taken_white_object:
-    taken_white_names = []
-    for piece in taken_white_object:
-        taken_white_names.append(piece.get_name())
-else:
-    taken_white_names = 'None'
-print('Taken White Pieces: ' + str(taken_white_names))
-
-taken_black_object = game._game_board.get_chessboard_dict()['taken_black']
-if taken_black_object:
-    taken_black_names = []
-    for piece in taken_black_object:
-        taken_black_names.append(piece.get_name())
-else:
-    taken_black_names = 'None'
-print('Taken Black Pieces: ' + str(taken_black_names))
