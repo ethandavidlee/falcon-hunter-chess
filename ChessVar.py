@@ -101,8 +101,8 @@ class ChessVar:
         elif not new_position_obj.check_valid_square():
             # print('this position is not on the board')
             return False  # new position is not a valid square
-        elif self._chessboard.get_chessboard_dict()[current_position_str]:
-            new_piece_color = self._chessboard.get_chessboard_dict()[current_position_str].get_color()
+        elif self._chessboard.get_chessboard_dict()[new_position_str]:
+            new_piece_color = self._chessboard.get_chessboard_dict()[new_position_str].get_color()
             if new_piece_color == current_piece.get_color():
                 # print('cannot take own piece')
                 return False  # cannot take own piece
