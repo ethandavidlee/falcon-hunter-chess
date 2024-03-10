@@ -92,7 +92,10 @@ class ChessVar:
         current_position_obj = BoardSquare(current_position_str)
         new_position_obj = BoardSquare(new_position_str)
 
-        if current_piece.get_color() != self.get_turn():
+        if not current_piece:
+            # print('no piece at',current_position_str)
+            return False
+        elif current_piece.get_color() != self.get_turn():
             # print('not',current_piece.get_color(),'turn')
             return False
         elif not new_position_obj.check_valid_square():
@@ -418,7 +421,12 @@ class Rook(ChessPiece):
         new_column = new_square.get_column()
         new_row = new_square.get_row()
 
-        if new_column == current_column or new_row == current_row:
+        column_difference = abs(new_column - current_column)
+        row_difference = abs(new_row - current_row)
+
+        if column_difference == 0 and row_difference == 0:
+            return False
+        elif new_column == current_column or new_row == current_row:
             return True
         else:
             return False
@@ -476,7 +484,9 @@ class Bishop(ChessPiece):
         column_difference = abs(new_column - current_column)
         row_difference = abs(new_row - current_row)
 
-        if column_difference == row_difference:
+        if column_difference == 0 and row_difference == 0:
+            return False
+        elif column_difference == row_difference:
             return True
         else:
             return False
@@ -505,7 +515,9 @@ class Queen(ChessPiece):
         column_difference = abs(new_column - current_column)
         row_difference = abs(new_row - current_row)
 
-        if new_column == current_column or new_row == current_row:
+        if column_difference == 0 and row_difference == 0:
+            return False
+        elif new_column == current_column or new_row == current_row:
             return True
         elif column_difference == row_difference:
             return True
@@ -573,13 +585,13 @@ class Pawn(ChessPiece):
             return False
 
         # if there is a piece diagonal one, the pawn can move and take it
-        if column_difference == 1 and self._chessboard.get_chessboard_dict()[new_square.get_square()]:
+        elif column_difference == 1 and self._chessboard.get_chessboard_dict()[new_square.get_square()]:
             if self._color == 'white' and row_difference == 1:
                 return True
             if self._color == 'black' and row_difference == -1:
                 return True
 
-        if self.get_color() == 'white':
+        elif self.get_color() == 'white':
             if current_square.get_row() == 2:
                 if column_difference == 0 and (row_difference == 1 or row_difference == 2):
                     return True
@@ -868,3 +880,34 @@ class Chessboard:
                 chessboard_representation += " "
             chessboard_representation += "\n"  # insert a new line after each row
         return chessboard_representation
+
+
+game = ChessVar()
+game.make_move('c4', 'c5')
+state = game.get_game_state()
+print(state)
+
+# print board post testing
+my_chessboard = game.get_chessboard().show_chessboard()
+print(my_chessboard)
+my_off_board_whites = [piece.get_name() for piece in game.get_chessboard().get_chessboard_dict()['off_board_white']]
+my_off_board_blacks = [piece.get_name() for piece in game.get_chessboard().get_chessboard_dict()['off_board_black']]
+print('Off_board: ' + str(my_off_board_whites) + ' ' + str(my_off_board_blacks))
+
+taken_white_object = game.get_chessboard().get_chessboard_dict()['taken_white']
+if taken_white_object:
+    taken_white_names = []
+    for piece in taken_white_object:
+        taken_white_names.append(piece.get_name())
+else:
+    taken_white_names = 'None'
+print('Taken White Pieces: ' + str(taken_white_names))
+
+taken_black_object = game.get_chessboard().get_chessboard_dict()['taken_black']
+if taken_black_object:
+    taken_black_names = []
+    for piece in taken_black_object:
+        taken_black_names.append(piece.get_name())
+else:
+    taken_black_names = 'None'
+print('Taken Black Pieces: ' + str(taken_black_names))
