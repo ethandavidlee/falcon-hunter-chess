@@ -101,6 +101,11 @@ class ChessVar:
         elif not new_position_obj.check_valid_square():
             # print('this position is not on the board')
             return False  # new position is not a valid square
+        elif self._chessboard.get_chessboard_dict()[current_position_str]:
+            new_piece_color = self._chessboard.get_chessboard_dict()[current_position_str].get_color()
+            if new_piece_color == current_piece.get_color():
+                # print('cannot take own piece')
+                return False  # cannot take own piece
         elif not current_piece.valid_moves(current_position_obj, new_position_obj):
             # print('piece cannot move here')
             return False  # piece cannot move from current to new
@@ -880,34 +885,3 @@ class Chessboard:
                 chessboard_representation += " "
             chessboard_representation += "\n"  # insert a new line after each row
         return chessboard_representation
-
-
-game = ChessVar()
-game.make_move('c4', 'c5')
-state = game.get_game_state()
-print(state)
-
-# print board post testing
-my_chessboard = game.get_chessboard().show_chessboard()
-print(my_chessboard)
-my_off_board_whites = [piece.get_name() for piece in game.get_chessboard().get_chessboard_dict()['off_board_white']]
-my_off_board_blacks = [piece.get_name() for piece in game.get_chessboard().get_chessboard_dict()['off_board_black']]
-print('Off_board: ' + str(my_off_board_whites) + ' ' + str(my_off_board_blacks))
-
-taken_white_object = game.get_chessboard().get_chessboard_dict()['taken_white']
-if taken_white_object:
-    taken_white_names = []
-    for piece in taken_white_object:
-        taken_white_names.append(piece.get_name())
-else:
-    taken_white_names = 'None'
-print('Taken White Pieces: ' + str(taken_white_names))
-
-taken_black_object = game.get_chessboard().get_chessboard_dict()['taken_black']
-if taken_black_object:
-    taken_black_names = []
-    for piece in taken_black_object:
-        taken_black_names.append(piece.get_name())
-else:
-    taken_black_names = 'None'
-print('Taken Black Pieces: ' + str(taken_black_names))
