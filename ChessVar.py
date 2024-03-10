@@ -19,7 +19,7 @@ class ChessVar:
     def __init__(self, turn=0, game_state='UNFINISHED'):
         self._turn = turn
         self._game_state = game_state
-        self._game_board = Chessboard()
+        self._chessboard = Chessboard()
 
     def get_game_state(self):
         """
@@ -31,11 +31,11 @@ class ChessVar:
         """
         Checks the state of the game and returns 'UNFINISHED', 'WHITE_WON', or 'BLACK_WON'
         """
-        for piece in self._game_board.get_chessboard_dict()['taken_white']:
+        for piece in self._chessboard.get_chessboard_dict()['taken_white']:
             if piece.get_piece_type() == 'king':
                 self._game_state = 'BLACK_WON'
                 return self._game_state
-        for piece in self._game_board.get_chessboard_dict()['taken_black']:
+        for piece in self._chessboard.get_chessboard_dict()['taken_black']:
             if piece.get_piece_type() == 'king':
                 self._game_state = 'WHITE_WON'
                 return self._game_state
@@ -51,6 +51,12 @@ class ChessVar:
             return 'white'
         else:
             return 'black'
+
+    def get_chessboard(self):
+        """
+        Returns an instance of the Chessboard class.
+        """
+        return self._chessboard
 
     def turn_order(self):
         """
@@ -72,8 +78,8 @@ class ChessVar:
         elif not self.valid_move(current_position, new_position):
             return False
         else:
-#            print('move from',current_position,'to',new_position,'complete')
-            self._game_board.chessboard_position(current_position, new_position)
+            # print('move from',current_position,'to',new_position,'complete')
+            self._chessboard.chessboard_position(current_position, new_position)
             self.set_game_state()
             self.turn_order()
             return True
@@ -82,26 +88,22 @@ class ChessVar:
         """
         Checks that the proposed move from current position to new position is legal. Returns True or False accordingly.
         """
-        current_piece = self._game_board.get_chessboard_dict()[current_position_str]
-        # current_position_obj = self._game_board._board_square.create_square(current_position_str)
+        current_piece = self._chessboard.get_chessboard_dict()[current_position_str]
         current_position_obj = BoardSquare(current_position_str)
-        # new_position_obj = self._game_board._board_square.create_square(new_position_str)
         new_position_obj = BoardSquare(new_position_str)
 
         if current_piece.get_color() != self.get_turn():
-        #    print('not',current_piece.get_color(),'turn')
+            # print('not',current_piece.get_color(),'turn')
             return False
-        elif not self._game_board._board_square.check_valid_square(new_position_str):
-            # Check if the new position is not a valid square
-         #   print('this position is not on the board')
-            return False
+        elif not new_position_obj.check_valid_square():
+            # print('this position is not on the board')
+            return False  # new position is not a valid square
         elif not current_piece.valid_moves(current_position_obj, new_position_obj):
-            # check that the piece's move method allows if to move between the two squares
-         #   print('piece cannot move here')
-            return False
+            # print('piece cannot move here')
+            return False  # piece cannot move from current to new
         elif not self.valid_journey(current_position_obj, new_position_obj, current_piece):
-          #  print('journey not valid')
-            return False
+            # print('journey not valid')
+            return False  # other pieces are interrupting the journey
         else:
             return True
 
@@ -116,90 +118,102 @@ class ChessVar:
             return True
 
         if current_row == new_row:
-            # check all squares between the columns on that row
-            if new_column > current_column:
-                for column in range(current_column+1, new_column): # start, stop
-                    position = f'{chr(column + 96)}{current_row}'  # Convert indices to coordinates
-                    if not self._game_board._chessboard_dict[position]:
-                        continue
-                    else:
-                        return False
-                return True
-            else:
-                for column in range(new_column+1, current_column): # start, stop
-                    position = f'{chr(column + 96)}{current_row}'  # Convert indices to coordinates
-                    if not self._game_board._chessboard_dict[position]:
-                        continue
-                    else:
-                        return False
-                return True
+            return self.check_horizontal_journey(current_column, new_column, current_row)
 
         if current_column == new_column:
-            # check all square between the rows on that column
-            if new_row > current_row:
-                for row in range(current_row+1, new_row): # start, stop
-                    position = f'{chr(current_column + 96)}{row}'  # Convert indices to coordinates
-                    if not self._game_board._chessboard_dict[position]:
+            return self.check_vertical_journey(current_row, new_row, current_column)
+
+        else:
+            return self.check_diagonal_journey(current_row, new_row, current_column, new_column)
+
+    def check_horizontal_journey(self, current_column, new_column, current_row):
+        """Checks all positions on the current row between the current column and the new column and returns False if
+        any are occupied and True if they are empty."""
+        if new_column > current_column:
+            for column in range(current_column + 1, new_column):  # start, stop
+                position = f'{chr(column + 96)}{current_row}'  # convert indices to coordinates
+                if not self._chessboard.get_chessboard_dict()[position]:
+                    continue
+                else:
+                    return False
+            return True
+        else:
+            for column in range(new_column + 1, current_column):  # start, stop
+                position = f'{chr(column + 96)}{current_row}'  # convert indices to coordinates
+                if not self._chessboard.get_chessboard_dict()[position]:
+                    continue
+                else:
+                    return False
+            return True
+
+    def check_vertical_journey(self, current_row, new_row, current_column):
+        """Checks all positions on the current column between the current row and the new row and returns False if
+        any are occupied and True if they are empty."""
+        if new_row > current_row:
+            for row in range(current_row + 1, new_row):  # start, stop
+                position = f'{chr(current_column + 96)}{row}'  # convert indices to coordinates
+                if not self._chessboard.get_chessboard_dict()[position]:
+                    continue
+                else:
+                    return False
+            return True
+        else:
+            for row in range(new_row + 1, current_row):  # start, stop
+                position = f'{chr(current_column + 96)}{row}'  # convert indices to coordinates
+                if not self._chessboard.get_chessboard_dict()[position]:
+                    continue
+                else:
+                    return False
+            return True
+
+    def check_diagonal_journey(self, current_row, new_row, current_column, new_column):
+        """Checks all positions on the diagonal from the current column and row to the new column and row  and returns
+        False if any are occupied and True if they are empty."""
+        if new_row > current_row:  # moving up the board
+            if new_column > current_column:  # moving right
+                column_loop = current_column + 1
+                for row in range(current_row+1, new_row):  # start, stop, step
+                    position = f'{chr(column_loop + 96)}{row}'
+                    column_loop += 1
+                    if not self._chessboard.get_chessboard_dict()[position]:
                         continue
                     else:
                         return False
                 return True
-            else:
-                for row in range(new_row+1, current_row): # start, stop
-                    position = f'{chr(current_column + 96)}{row}'  # Convert indices to coordinates
-                    if not self._game_board._chessboard_dict[position]:
+
+            else:  # moving left
+                column_loop = current_column - 1
+                for row in range(current_row+1, new_row):  # start, stop, step
+                    position = f'{chr(column_loop + 96)}{row}'
+                    column_loop -= 1
+                    if not self._chessboard.get_chessboard_dict()[position]:
                         continue
                     else:
                         return False
                 return True
 
-        else:  # diagonal move
-            if new_row > current_row:  # moving up the board
-                if new_column > current_column:  # moving right
-                    column_loop = current_column + 1
-                    for row in range(current_row+1, new_row):  # start, stop, step
-                        position = f'{chr(column_loop + 96)}{row}'
-                        column_loop += 1
-                        if not self._game_board._chessboard_dict[position]:
-                            continue
-                        else:
-                            return False
-                    return True
+        else:  # moving down the board
+            if new_column > current_column:  # moving right
+                column_loop = current_column + 1
+                for row in range(current_row-1, new_row, -1):  # start, stop, step
+                    position = f'{chr(column_loop + 96)}{row}'
+                    column_loop += 1
+                    if not self._chessboard.get_chessboard_dict()[position]:
+                        continue
+                    else:
+                        return False
+                return True
 
-                else:  # moving left
-                    column_loop = current_column - 1
-                    for row in range(current_row+1, new_row):  # start, stop, step
-                        position = f'{chr(column_loop + 96)}{row}'
-                        column_loop -= 1
-                        if not self._game_board._chessboard_dict[position]:
-                            continue
-                        else:
-                            return False
-                    return True
-
-            else:  # moving down the board
-                if new_column > current_column:  # moving right
-                    column_loop = current_column + 1
-                    for row in range(current_row-1, new_row, -1):  # start, stop, step
-                        position = f'{chr(column_loop + 96)}{row}'
-                        column_loop += 1
-                        if not self._game_board._chessboard_dict[position]:
-                            continue
-                        else:
-                            return False
-                    return True
-
-                else:  # moving left
-                    column_loop = current_column - 1
-                    for row in range(current_row-1, new_row, -1):  # start, stop, step
-                        position = f'{chr(column_loop + 96)}{row}'
-                        column_loop -= 1
-                        if not self._game_board._chessboard_dict[position]:
-                            continue
-                        else:
-                            return False
-                    return True
-
+            else:  # moving left
+                column_loop = current_column - 1
+                for row in range(current_row-1, new_row, -1):  # start, stop, step
+                    position = f'{chr(column_loop + 96)}{row}'
+                    column_loop -= 1
+                    if not self._chessboard.get_chessboard_dict()[position]:
+                        continue
+                    else:
+                        return False
+                return True
 
     def enter_fairy_piece(self, fairy_piece, entry_position):
         """
@@ -209,43 +223,43 @@ class ChessVar:
         if self.valid_fairy_enter(fairy_piece, entry_position):
             if fairy_piece == 'F':
                 white_falcon = Falcon(color='white', name='F')
-                self._game_board.place_piece(white_falcon, entry_position)
+                self._chessboard.place_piece(white_falcon, entry_position)
 
-                for piece in self._game_board._chessboard_dict['off_board_white']:
+                for piece in self._chessboard.get_chessboard_dict()['off_board_white']:
                     if piece.get_name() == fairy_piece:
                         fairy_piece_object = piece
-                off_board_list = self._game_board._chessboard_dict['off_board_white']
-                off_board_list.remove(fairy_piece_object)
+                        off_board_list = self._chessboard.get_chessboard_dict()['off_board_white']
+                        off_board_list.remove(fairy_piece_object)
 
             if fairy_piece == 'f':
                 black_falcon = Falcon(color='black', name='f')
-                self._game_board.place_piece(black_falcon, entry_position)
+                self._chessboard.place_piece(black_falcon, entry_position)
 
-                for piece in self._game_board._chessboard_dict['off_board_black']:
+                for piece in self._chessboard.get_chessboard_dict()['off_board_black']:
                     if piece.get_name() == fairy_piece:
                         fairy_piece_object = piece
-                off_board_list = self._game_board._chessboard_dict['off_board_black']
-                off_board_list.remove(fairy_piece_object)
+                        off_board_list = self._chessboard.get_chessboard_dict()['off_board_black']
+                        off_board_list.remove(fairy_piece_object)
 
             if fairy_piece == 'H':
                 white_hunter = Falcon(color='white', name='H')
-                self._game_board.place_piece(white_hunter, entry_position)
+                self._chessboard.place_piece(white_hunter, entry_position)
 
-                for piece in self._game_board._chessboard_dict['off_board_white']:
+                for piece in self._chessboard.get_chessboard_dict()['off_board_white']:
                     if piece.get_name() == fairy_piece:
                         fairy_piece_object = piece
-                off_board_list = self._game_board._chessboard_dict['off_board_white']
-                off_board_list.remove(fairy_piece_object)
+                        off_board_list = self._chessboard.get_chessboard_dict()['off_board_white']
+                        off_board_list.remove(fairy_piece_object)
 
             if fairy_piece == 'h':
                 black_hunter = Falcon(color='black', name='h')
-                self._game_board.place_piece(black_hunter, entry_position)
+                self._chessboard.place_piece(black_hunter, entry_position)
 
-                for piece in self._game_board._chessboard_dict['off_board_black']:
+                for piece in self._chessboard.get_chessboard_dict()['off_board_black']:
                     if piece.get_name() == fairy_piece:
                         fairy_piece_object = piece
-                off_board_list = self._game_board._chessboard_dict['off_board_black']
-                off_board_list.remove(fairy_piece_object)
+                        off_board_list = self._chessboard.get_chessboard_dict()['off_board_black']
+                        off_board_list.remove(fairy_piece_object)
 
             self.turn_order()
             return True
@@ -258,56 +272,57 @@ class ChessVar:
         Checks that the given fairy_piece can enter the board at the given entry_position. Returns True if the move is
         valid and False if it is not.
         """
-        position = BoardSquare(entry_position)
+        board_square = BoardSquare(entry_position)
 
         if self.get_game_state() != 'UNFINISHED':
-         #   print('game finished')
+            # print('game finished')
             return False
 
+        piece_color = None
         if fairy_piece == 'H' or fairy_piece == 'F':
             piece_color = 'white'
         if fairy_piece == 'f' or fairy_piece == 'h':
             piece_color = 'black'
         if self.get_turn() != piece_color:
-         #   print('not piece turn')
+            # print('not piece turn')
             return False
 
         off_board_pieces = []
         if piece_color == 'white':
-            for piece in self._game_board.get_chessboard_dict()['off_board_white']:
+            for piece in self._chessboard.get_chessboard_dict()['off_board_white']:
                 off_board_pieces.append(piece.get_name())
                 if fairy_piece not in off_board_pieces:
-                 #   print('piece already entered')
+                    # print('piece already entered')
                     return False
         if piece_color == 'black':
-            for piece in self._game_board.get_chessboard_dict()['off_board_black']:
+            for piece in self._chessboard.get_chessboard_dict()['off_board_black']:
                 off_board_pieces.append(piece.get_name())
                 if fairy_piece not in off_board_pieces:
-                  #  print('piece already entered')
+                    # print('piece already entered')
                     return False
 
-        entry_row = position.get_row()
+        entry_row = board_square.get_row()
         if piece_color == 'white':
             if entry_row != 1 and entry_row != 2:
-              #  print("Can't enter fairy piece on this row")
+                # print("Can't enter fairy piece on this row")
                 return False
         if piece_color == 'black':
             if entry_row != 8 and entry_row != 8:
-             #   print("Can't enter fairy piece on this row")
+                # print("Can't enter fairy piece on this row")
                 return False
 
         fairy_count = 0
         piece_count = 0
         if piece_color == 'white':
-            for piece in self._game_board.get_chessboard_dict()['off_board_white']:
+            for __ in self._chessboard.get_chessboard_dict()['off_board_white']:
                 fairy_count += 1
-            for piece in self._game_board.get_chessboard_dict()['taken_white']:
+            for piece in self._chessboard.get_chessboard_dict()['taken_white']:
                 if isinstance(piece, ChessPiece) and piece.get_name() in ['R', 'N', 'B', 'Q']:
                     piece_count += 1
         if piece_color == 'black':
-            for piece in self._game_board.get_chessboard_dict()['off_board_black']:
+            for __ in self._chessboard.get_chessboard_dict()['off_board_black']:
                 fairy_count += 1
-            for piece in self._game_board.get_chessboard_dict()['taken_black']:
+            for piece in self._chessboard.get_chessboard_dict()['taken_black']:
                 if isinstance(piece, ChessPiece) and piece.get_name() in ['r', 'n', 'b', 'q']:
                     piece_count += 1
         if fairy_count == 2 and piece_count == 0:
@@ -317,8 +332,8 @@ class ChessVar:
         if fairy_count == 0:
             return False
 
-        if self._game_board.get_chessboard_dict()[entry_position]:
-          #  print('not empty')
+        if self._chessboard.get_chessboard_dict()[entry_position]:
+            # print('not empty')
             return False
         else:
             return True
@@ -338,10 +353,6 @@ class BoardSquare:
         """Returns the square coordinate."""
         return self._square
 
-    @classmethod
-    def create_square(cls, square):
-        return cls(square)
-
     def get_column(self):
         """Returns the square's column as a number."""
         column_alph = self._square[0].lower()
@@ -353,10 +364,9 @@ class BoardSquare:
         row = int(self._square[1])
         return row
 
-    def check_valid_square(self, square):
+    def check_valid_square(self):
         """Checks that the square is valid by making sure that its row and column is within the board range and returns
          True or False accordingly."""
-        self._square = square
         if self.get_row() > 8 or self.get_row() < 1 or self.get_column() > 8 or self.get_column() < 1:
             return False
         else:
@@ -845,3 +855,35 @@ class Chessboard:
             chessboard_representation += "\n"  # insert a new line after each row
         return chessboard_representation
 
+
+game = ChessVar()
+game.make_move('e2', 'e4')
+game.make_move('a7', 'a5')
+game.make_move('e4', 'e4')
+state = game.get_game_state()
+print(state)
+
+# print board post testing
+my_chessboard = game.get_chessboard().show_chessboard()
+print(my_chessboard)
+my_off_board_whites = [piece.get_name() for piece in game.get_chessboard().get_chessboard_dict()['off_board_white']]
+my_off_board_blacks = [piece.get_name() for piece in game.get_chessboard().get_chessboard_dict()['off_board_black']]
+print('Off_board: ' + str(my_off_board_whites) + ' ' + str(my_off_board_blacks))
+
+taken_white_object = game.get_chessboard().get_chessboard_dict()['taken_white']
+if taken_white_object:
+    taken_white_names = []
+    for piece in taken_white_object:
+        taken_white_names.append(piece.get_name())
+else:
+    taken_white_names = 'None'
+print('Taken White Pieces: ' + str(taken_white_names))
+
+taken_black_object = game.get_chessboard().get_chessboard_dict()['taken_black']
+if taken_black_object:
+    taken_black_names = []
+    for piece in taken_black_object:
+        taken_black_names.append(piece.get_name())
+else:
+    taken_black_names = 'None'
+print('Taken Black Pieces: ' + str(taken_black_names))
