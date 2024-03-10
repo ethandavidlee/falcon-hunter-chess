@@ -1,6 +1,6 @@
 # Author: Ethan David Lee
 # GitHub username: ethandavidlee
-# Date: 2024/03/09
+# Date: 2024/03/10
 # Description: Program for a playable chess game variation called Falcon-Hunter Chess with standard chess rules, except
 #           there is no check or checkmate, castling, en passant, or pawn promotion, and the addition of two pieces, the
 #           Falcon and Hunter, with special rules for each. Falcons move forward like a bishop and backward like a rook,
@@ -538,6 +538,8 @@ class King(ChessPiece):
 
         if column_difference > 1 or row_difference > 1:
             return False
+        elif column_difference == 0 and row_difference == 0:
+            return False
         else:
             return True
 
@@ -564,7 +566,7 @@ class Pawn(ChessPiece):
         new_row = new_square.get_row()
 
         column_difference = abs(new_column - current_column)
-        row_difference = abs(new_row - current_row)
+        row_difference = (new_row - current_row)
 
         # if there is a piece at the new square straight ahead (because pawns can't take forward)
         if column_difference == 0 and self._chessboard.get_chessboard_dict()[new_square.get_square()]:
@@ -572,22 +574,34 @@ class Pawn(ChessPiece):
 
         # if there is a piece diagonal one, the pawn can move and take it
         if column_difference == 1 and self._chessboard.get_chessboard_dict()[new_square.get_square()]:
-            if self._color == 'white' and (new_row - current_row == 1):
+            if self._color == 'white' and row_difference == 1:
                 return True
-            if self._color == 'black' and (new_row - current_row == -1):
+            if self._color == 'black' and row_difference == -1:
                 return True
 
-        if (self.get_color() == 'white' and current_square.get_row() == 2) or (self.get_color() == 'black' and
-                                                                               current_square.get_row() == 7):
-            if column_difference == 0 and (row_difference == 1 or row_difference == 2):
-                return True
+        if self.get_color() == 'white':
+            if current_square.get_row() == 2:
+                if column_difference == 0 and (row_difference == 1 or row_difference == 2):
+                    return True
+                else:
+                    return False
             else:
-                return False
-        else:
-            if column_difference == 0 and row_difference == 1:
-                return True
+                if column_difference == 0 and row_difference == 1:
+                    return True
+                else:
+                    return False
+
+        else:  # black
+            if current_square.get_row() == 7:
+                if column_difference == 0 and (row_difference == -1 or row_difference == -2):
+                    return True
+                else:
+                    return False
             else:
-                return False
+                if column_difference == 0 and row_difference == -1:
+                    return True
+                else:
+                    return False
 
 
 class Hunter(ChessPiece):
@@ -625,7 +639,7 @@ class Hunter(ChessPiece):
                     return True
                 else:
                     return False
-        else:
+        else:  # black
             if new_column - current_column <= 0:  # if black moving forward
                 if new_column == current_column or new_row == current_row:  # move like a rook
                     return True
@@ -854,36 +868,3 @@ class Chessboard:
                 chessboard_representation += " "
             chessboard_representation += "\n"  # insert a new line after each row
         return chessboard_representation
-
-
-game = ChessVar()
-game.make_move('e2', 'e4')
-game.make_move('a7', 'a5')
-game.make_move('e4', 'e4')
-state = game.get_game_state()
-print(state)
-
-# print board post testing
-my_chessboard = game.get_chessboard().show_chessboard()
-print(my_chessboard)
-my_off_board_whites = [piece.get_name() for piece in game.get_chessboard().get_chessboard_dict()['off_board_white']]
-my_off_board_blacks = [piece.get_name() for piece in game.get_chessboard().get_chessboard_dict()['off_board_black']]
-print('Off_board: ' + str(my_off_board_whites) + ' ' + str(my_off_board_blacks))
-
-taken_white_object = game.get_chessboard().get_chessboard_dict()['taken_white']
-if taken_white_object:
-    taken_white_names = []
-    for piece in taken_white_object:
-        taken_white_names.append(piece.get_name())
-else:
-    taken_white_names = 'None'
-print('Taken White Pieces: ' + str(taken_white_names))
-
-taken_black_object = game.get_chessboard().get_chessboard_dict()['taken_black']
-if taken_black_object:
-    taken_black_names = []
-    for piece in taken_black_object:
-        taken_black_names.append(piece.get_name())
-else:
-    taken_black_names = 'None'
-print('Taken Black Pieces: ' + str(taken_black_names))
