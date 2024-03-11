@@ -1,6 +1,6 @@
 # Author: Ethan David Lee
 # GitHub username: ethandavidlee
-# Date: 2024/03/10
+# Date: 2024/03/11
 # Description: Program for a playable chess game variation called Falcon-Hunter Chess with standard chess rules, except
 #           there is no check or checkmate, castling, en passant, or pawn promotion, and the addition of two pieces, the
 #           Falcon and Hunter, with special rules for each. Falcons move forward like a bishop and backward like a rook,
@@ -85,7 +85,8 @@ class ChessVar:
 
     def valid_move(self, current_position_str, new_position_str):
         """
-        Checks that the proposed move from current position to new position is legal. Returns True or False accordingly.
+        Takes the strings of the current and new position and checks that the proposed move from current position to
+        new position is legal. Returns True or False accordingly.
         """
         current_piece = self._chessboard.get_chessboard_dict()[current_position_str]
         current_position_obj = BoardSquare(current_position_str)
@@ -93,24 +94,34 @@ class ChessVar:
 
         if not current_piece:
             return False
+
         if current_piece.get_color() != self.get_turn():
-            print('not your turn')
             return False
+
         if not new_position_obj.check_valid_square():
             return False  # new position is not a valid square
+
         if self._chessboard.get_chessboard_dict()[new_position_str]:
             new_piece_color = self._chessboard.get_chessboard_dict()[new_position_str].get_color()
             if new_piece_color == current_piece.get_color():
                 return False  # cannot take own piece
+
         if not current_piece.valid_moves(current_position_obj, new_position_obj):
             return False  # piece cannot move from current to new
+
         if not self.valid_journey(current_position_obj, new_position_obj, current_piece):
             return False  # other pieces are interrupting the journey
+
         else:
             return True
 
     def valid_journey(self, current_position_obj, new_position_obj, current_piece):
-        """docstring for valid_journey method"""
+        """
+        Takes the current and new position instances of the BoardSquare class as current_position_obj and
+        new_position_obj and the piece at the current position as current_piece. Checks that the piece can move from
+        the current to new position without another piece being in the way. Returns True or False accordingly, via
+        methods for horizontal, vertical and diagonal journeys.
+        """
         current_row = current_position_obj.get_row()
         new_row = new_position_obj.get_row()
         current_column = current_position_obj.get_column()
@@ -129,8 +140,10 @@ class ChessVar:
             return self.check_diagonal_journey(current_row, new_row, current_column, new_column)
 
     def check_horizontal_journey(self, current_column, new_column, current_row):
-        """Checks all positions on the current row between the current column and the new column and returns False if
-        any are occupied and True if they are empty."""
+        """
+        Checks all positions on the current row between the current column and the new column and returns False if any
+        are occupied and True if they are empty.
+        """
         if new_column > current_column:
             for column in range(current_column + 1, new_column):  # start, stop
                 position = f'{chr(column + 96)}{current_row}'  # convert indices to coordinates
@@ -149,8 +162,10 @@ class ChessVar:
             return True
 
     def check_vertical_journey(self, current_row, new_row, current_column):
-        """Checks all positions on the current column between the current row and the new row and returns False if
-        any are occupied and True if they are empty."""
+        """
+        Checks all positions on the current column between the current row and the new row and returns False if any are
+        occupied and True if they are empty.
+        """
         if new_row > current_row:
             for row in range(current_row + 1, new_row):  # start, stop
                 position = f'{chr(current_column + 96)}{row}'  # convert indices to coordinates
@@ -169,8 +184,10 @@ class ChessVar:
             return True
 
     def check_diagonal_journey(self, current_row, new_row, current_column, new_column):
-        """Checks all positions on the diagonal from the current column and row to the new column and row  and returns
-        False if any are occupied and True if they are empty."""
+        """
+        Checks all positions on the diagonal from the current column and row to the new column and row and returns
+        False if any are occupied and True if they are empty.
+        """
         if new_row > current_row:  # moving up the board
             if new_column > current_column:  # moving right
                 column_loop = current_column + 1
@@ -345,23 +362,31 @@ class BoardSquare:
         self._square = square
 
     def get_square(self):
-        """Returns the square coordinate."""
+        """
+        Returns the square coordinate.
+        """
         return self._square
 
     def get_column(self):
-        """Returns the square's column as a number."""
+        """
+        Returns the square's column as an integer.
+        """
         column_alph = self._square[0].lower()
         column_num = ord(column_alph) - 96
         return column_num
 
     def get_row(self):
-        """Returns the square's row."""
+        """
+        Returns the square's row as an integer.
+        """
         row = int(self._square[1])
         return row
 
     def check_valid_square(self):
-        """Checks that the square is valid by making sure that its row and column is within the board range and returns
-         True or False accordingly."""
+        """
+        Checks that the square is valid by making sure that its row and column is within the board range and returns
+        True or False accordingly.
+        """
         if self.get_row() > 8 or self.get_row() < 1 or self.get_column() > 8 or self.get_column() < 1:
             return False
         else:
@@ -380,24 +405,29 @@ class ChessPiece:
         self._name = name
 
     def get_color(self):
-        """Returns the chess piece's color"""
+        """
+        Returns the chess piece's color.
+        """
         return self._color
 
     def get_piece_type(self):
-        """Returns the chess piece's type"""
+        """
+        Returns the chess piece's type.
+        """
         return self._piece_type
 
     def get_name(self):
-        """Returns the chess piece's type"""
+        """
+        Returns the chess piece's name.
+        """
         return self._name
 
 
 class Rook(ChessPiece):
     """
     Represents a Rook (castle) chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get
-    columns and rows to define the pieces movement methods. Communicates with Chessboard for to be added to the
-    chessboard dictionary at the relevant position key. Communicates with ChessVar to share the pieces movement
-    methodology.
+    columns and rows to define the pieces movement style. Communicates with Chessboard for the pieces to be added to the
+    chessboard dictionary when setting up the board. Communicates with ChessVar to share the pieces movement style.
     """
     def __init__(self, color, name):
         super().__init__(color, "rook", name)
@@ -427,8 +457,8 @@ class Rook(ChessPiece):
 class Knight(ChessPiece):
     """
     Represents a Knight chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns
-    and rows to define the pieces movement methods. Communicates with Chessboard for to be added to the chessboard
-    dictionary at the relevant position key. Communicates with ChessVar to share the pieces movement methodology.
+    and rows to define the pieces movement style. Communicates with Chessboard for the pieces to be added to the
+    chessboard dictionary when setting up the board. Communicates with ChessVar to share the pieces movement style.
     """
     def __init__(self, color, name):
         super().__init__(color, "knight", name)
@@ -456,8 +486,8 @@ class Knight(ChessPiece):
 class Bishop(ChessPiece):
     """
     Represents a Bishop chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns
-    and rows to define the pieces movement methods. Communicates with Chessboard for to be added to the chessboard
-    dictionary at the relevant position key. Communicates with ChessVar to share the pieces movement methodology.
+    and rows to define the pieces movement style. Communicates with Chessboard for the pieces to be added to the
+    chessboard dictionary when setting up the board. Communicates with ChessVar to share the pieces movement style.
     """
     def __init__(self, color, name):
         super().__init__(color, "bishop", name)
@@ -486,9 +516,9 @@ class Bishop(ChessPiece):
 
 class Queen(ChessPiece):
     """
-    Represents a Queen chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns and
-    rows to define the pieces movement methods. Communicates with Chessboard for to be added to the chessboard
-    dictionary at the relevant position key. Communicates with ChessVar to share the pieces movement methodology.
+    Represents a Queen chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns
+    and rows to define the pieces movement style. Communicates with Chessboard for the pieces to be added to the
+    chessboard dictionary when setting up the board. Communicates with ChessVar to share the pieces movement style.
     """
     def __init__(self, color, name):
         super().__init__(color, "queen", name)
@@ -519,9 +549,9 @@ class Queen(ChessPiece):
 
 class King(ChessPiece):
     """
-    Represents a King chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns and
-    rows to define the pieces movement methods. Communicates with Chessboard for to be added to the chessboard
-    dictionary at the relevant position key. Communicates with ChessVar to share the pieces movement methodology.
+    Represents a King chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns
+    and rows to define the pieces movement style. Communicates with Chessboard for the pieces to be added to the
+    chessboard dictionary when setting up the board. Communicates with ChessVar to share the pieces movement style.
     """
     def __init__(self, color, name):
         super().__init__(color, "king", name)
@@ -550,9 +580,9 @@ class King(ChessPiece):
 
 class Pawn(ChessPiece):
     """
-    Represents a Pawn chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns and
-    rows to define the pieces movement methods. Communicates with Chessboard for to be added to the chessboard
-    dictionary at the relevant position key. Communicates with ChessVar to share the pieces movement methodology.
+    Represents a Pawn chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns
+    and rows to define the pieces movement style. Communicates with Chessboard for the pieces to be added to the
+    chessboard dictionary when setting up the board. Communicates with ChessVar to share the pieces movement style.
     """
     def __init__(self, color, name, chessboard):
         super().__init__(color, "pawn", name)
@@ -611,8 +641,9 @@ class Pawn(ChessPiece):
 class Hunter(ChessPiece):
     """
     Represents a Hunter chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns
-    and rows to define the pieces movement methods. Communicates with Chessboard for to be added to the chessboard
-    dictionary at the relevant position key. Communicates with ChessVar to share the pieces movement methodology.
+    and rows to define the pieces movement style. Communicates with Chessboard for the pieces to be added to the
+    chessboard dictionary off board positions when setting up the board and adding the fairy piece to the board proper
+    via the enter_fairy_piece method of ChessVar. Communicates with ChessVar to share the pieces movement style.
     """
 
     def __init__(self, color, name):
@@ -660,8 +691,9 @@ class Hunter(ChessPiece):
 class Falcon(ChessPiece):
     """
     Represents a Falcon chess piece. Inherits from ChessPiece. Communicates with the BoardSquare class to get columns
-    and rows to define the pieces movement methods. Communicates with Chessboard for to be added to the chessboard
-    dictionary at the relevant position key. Communicates with ChessVar to share the pieces movement methodology.
+    and rows to define the pieces movement style. Communicates with Chessboard for the pieces to be added to the
+    chessboard dictionary off board positions when setting up the board and adding the fairy piece to the board proper
+    via the enter_fairy_piece method of ChessVar. Communicates with ChessVar to share the pieces movement style.
     """
 
     def __init__(self, color, name):
@@ -719,11 +751,15 @@ class Chessboard:
         self._board_square = BoardSquare(None)
 
     def get_chessboard_dict(self):
-        """Returns the chessboard dictionary."""
+        """
+        Returns the chessboard dictionary.
+        """
         return self._chessboard_dict
 
     def setup_new_game(self):
-        """Sets up chess board for the start of the game"""
+        """
+        Sets up chess board for the start of the game.
+        """
         white_rook = Rook(color='white', name='R')
         self.place_piece(white_rook, 'a1')
         white_knight = Knight(color='white', name='N')
@@ -824,25 +860,33 @@ class Chessboard:
         self._chessboard_dict['taken_black'] = []
 
     def place_piece(self, chess_piece, position):
-        """Places the chess piece on the board at the given position."""
+        """
+        Places the chess piece on the board at the given position.
+        """
         self._chessboard_dict[position] = chess_piece
 
     def remove_piece(self, position):
-        """Removes the chess piece at the given position from the board."""
+        """
+        Removes the chess piece at the given position from the board.
+        """
         self._chessboard_dict[position] = None
 
-    def take_piece(self, chess_piece, position=None):
-        if not position:
-            if chess_piece.get_color() == 'white':
-                self._chessboard_dict['taken_white'].append(chess_piece)
-            else:
-                self._chessboard_dict['taken_black'].append(chess_piece)
+    def take_piece(self, chess_piece):
+        """
+        Takes a chess_piece object and adds it to the appropriate taken_white or taken_black list keys of the chessboard
+        dictionary depending on the pieces color.
+        """
+        if chess_piece.get_color() == 'white':
+            self._chessboard_dict['taken_white'].append(chess_piece)
+        else:
+            self._chessboard_dict['taken_black'].append(chess_piece)
 
     def chessboard_position(self, current_position, new_position):
-        """Updates the position keys of the chessboard dictionary when a move is made. Removes any piece in the given
+        """
+        Updates the position keys of the chessboard dictionary when a move is made. Removes any piece in the given
         new_position and adds it to the taken position key, and removes the piece in the given current_position and adds
-        it to the new_position key. Returns True when the dictionary is updated."""
-
+        it to the new_position key. Returns True when the dictionary is updated.
+        """
         # removes any piece at the new position from the board and adds it to the appropriate 'taken' list
         if self._chessboard_dict[new_position]:
             taken_piece = self._chessboard_dict[new_position]
@@ -855,7 +899,9 @@ class Chessboard:
         self.remove_piece(current_position)
 
     def show_chessboard(self):
-        """Returns a readable chess board for printing with each chess piece listed in its position."""
+        """
+        Returns a readable chessboard for printing with each chess piece listed in its position.
+        """
         columns = 8
         rows = 8
         chessboard_representation = ""
