@@ -78,7 +78,6 @@ class ChessVar:
         if not self.valid_move(current_position, new_position):
             return False
         else:
-            # print('move from',current_position,'to',new_position,'complete')
             self._chessboard.chessboard_position(current_position, new_position)
             self.set_game_state()
             self.turn_order()
@@ -93,24 +92,19 @@ class ChessVar:
         new_position_obj = BoardSquare(new_position_str)
 
         if not current_piece:
-            print('Turn:', self._turn, 'no piece at', current_position_str)
             return False
         if current_piece.get_color() != self.get_turn():
-            print('Turn:', self._turn, 'not', current_piece.get_color(), 'turn')
+            print('not your turn')
             return False
         if not new_position_obj.check_valid_square():
-            print('Turn:', self._turn, 'this position is not on the board')
             return False  # new position is not a valid square
         if self._chessboard.get_chessboard_dict()[new_position_str]:
             new_piece_color = self._chessboard.get_chessboard_dict()[new_position_str].get_color()
             if new_piece_color == current_piece.get_color():
-                print('Turn:', self._turn, 'cannot take own piece')
                 return False  # cannot take own piece
         if not current_piece.valid_moves(current_position_obj, new_position_obj):
-            print('Turn:', self._turn, 'piece cannot move here')
             return False  # piece cannot move from current to new
         if not self.valid_journey(current_position_obj, new_position_obj, current_piece):
-            print('Turn:', self._turn, 'journey not valid')
             return False  # other pieces are interrupting the journey
         else:
             return True
@@ -250,7 +244,7 @@ class ChessVar:
                         off_board_list.remove(fairy_piece_object)
 
             if fairy_piece == 'H':
-                white_hunter = Falcon(color='white', name='H')
+                white_hunter = Hunter(color='white', name='H')
                 self._chessboard.place_piece(white_hunter, entry_position)
 
                 for piece in self._chessboard.get_chessboard_dict()['off_board_white']:
@@ -260,7 +254,7 @@ class ChessVar:
                         off_board_list.remove(fairy_piece_object)
 
             if fairy_piece == 'h':
-                black_hunter = Falcon(color='black', name='h')
+                black_hunter = Hunter(color='black', name='h')
                 self._chessboard.place_piece(black_hunter, entry_position)
 
                 for piece in self._chessboard.get_chessboard_dict()['off_board_black']:
@@ -283,7 +277,6 @@ class ChessVar:
         board_square = BoardSquare(entry_position)
 
         if self.get_game_state() != 'UNFINISHED':
-            # print('game finished')
             return False
 
         piece_color = None
@@ -292,31 +285,26 @@ class ChessVar:
         if fairy_piece == 'f' or fairy_piece == 'h':
             piece_color = 'black'
         if self.get_turn() != piece_color:
-            # print('not piece turn')
             return False
 
         off_board_pieces = []
         if piece_color == 'white':
             for piece in self._chessboard.get_chessboard_dict()['off_board_white']:
                 off_board_pieces.append(piece.get_name())
-                if fairy_piece not in off_board_pieces:
-                    # print('piece already entered')
-                    return False
+            if fairy_piece not in off_board_pieces:
+                return False
         if piece_color == 'black':
             for piece in self._chessboard.get_chessboard_dict()['off_board_black']:
                 off_board_pieces.append(piece.get_name())
-                if fairy_piece not in off_board_pieces:
-                    # print('piece already entered')
-                    return False
+            if fairy_piece not in off_board_pieces:
+                return False
 
         entry_row = board_square.get_row()
         if piece_color == 'white':
             if entry_row != 1 and entry_row != 2:
-                # print("Can't enter fairy piece on this row")
                 return False
         if piece_color == 'black':
-            if entry_row != 8 and entry_row != 8:
-                # print("Can't enter fairy piece on this row")
+            if entry_row != 7 and entry_row != 8:
                 return False
 
         fairy_count = 0
@@ -341,7 +329,6 @@ class ChessVar:
             return False
 
         if self._chessboard.get_chessboard_dict()[entry_position]:
-            # print('not empty')
             return False
         else:
             return True
@@ -642,28 +629,29 @@ class Hunter(ChessPiece):
         new_column = new_square.get_column()
         new_row = new_square.get_row()
 
-        column_difference = abs(new_column - current_column)
-        row_difference = abs(new_row - current_row)
+        abs_column_difference = abs(new_column - current_column)
+        row_difference = new_row - current_row
+        abs_row_difference = abs(new_row - current_row)
 
         if self.get_color() == 'white':
-            if new_column - current_column >= 0:  # if white moving forward
-                if new_column == current_column or new_row == current_row:  # move like a rook
+            if row_difference > 0:  # if white moving forward
+                if current_column == new_column:  # move like a rook
                     return True
                 else:
                     return False
-            else:  # if white moving backwards
-                if column_difference == row_difference:  # move like a bishop
+            else:  # if white moving backwards (or level)
+                if abs_row_difference == abs_column_difference:  # move like a bishop
                     return True
                 else:
                     return False
         else:  # black
-            if new_column - current_column <= 0:  # if black moving forward
-                if new_column == current_column or new_row == current_row:  # move like a rook
+            if row_difference < 0:  # if black moving forward
+                if current_column == new_column:  # move like a rook
                     return True
                 else:
                     return False
-            else:  # if black moving backwards
-                if column_difference == row_difference:  # move like a bishop
+            else:  # if black moving backwards (or level)
+                if abs_row_difference == abs_column_difference:  # move like a bishop
                     return True
                 else:
                     return False
@@ -690,28 +678,29 @@ class Falcon(ChessPiece):
         new_column = new_square.get_column()
         new_row = new_square.get_row()
 
-        column_difference = abs(new_column - current_column)
-        row_difference = abs(new_row - current_row)
+        abs_column_difference = abs(new_column - current_column)
+        row_difference = new_row - current_row
+        abs_row_difference = abs(new_row - current_row)
 
         if self.get_color() == 'white':
-            if new_column - current_column >= 0:  # if white moving forward
-                if column_difference == row_difference:  # move like a bishop
+            if row_difference > 0:  # if white moving forward
+                if abs_row_difference == abs_column_difference:  # move like a bishop
                     return True
                 else:
                     return False
             else:  # if white moving backwards
-                if new_column == current_column or new_row == current_row:  # move like a rook
+                if current_column == new_column:  # move like a rook
                     return True
                 else:
                     return False
         else:
-            if new_column - current_column <= 0:  # if black moving forward
-                if column_difference == row_difference:  # move like a bishop
+            if row_difference < 0:  # if black moving forward
+                if abs_row_difference == abs_column_difference:  # move like a bishop
                     return True
                 else:
                     return False
             else:  # if black moving backwards
-                if new_column == current_column or new_row == current_row:  # move like a rook
+                if current_column == new_column:  # move like a rook
                     return True
                 else:
                     return False
@@ -725,12 +714,7 @@ class Chessboard:
     and set the columns and rows of each position on the board.
     """
     def __init__(self):
-        self._chessboard_dict = {
-            'off_board_white': [],
-            'off_board_black': [],
-            'taken_white': [],
-            'taken_black': []
-        }  # initialize dictionary that maps positions to pieces
+        self._chessboard_dict = {}  # initialize dictionary that maps positions to pieces
         self.setup_new_game()  # initialize the board with pieces for the start of the game
         self._board_square = BoardSquare(None)
 
@@ -827,12 +811,13 @@ class Chessboard:
         self._chessboard_dict['off_board_white'] = []
         white_falcon = Falcon(color='white', name='F')
         self._chessboard_dict['off_board_white'].append(white_falcon)
-        white_hunter = Falcon(color='white', name='H')
+        white_hunter = Hunter(color='white', name='H')
         self._chessboard_dict['off_board_white'].append(white_hunter)
+
         self._chessboard_dict['off_board_black'] = []
         black_falcon = Falcon(color='black', name='f')
         self._chessboard_dict['off_board_black'].append(black_falcon)
-        black_hunter = Falcon(color='black', name='h')
+        black_hunter = Hunter(color='black', name='h')
         self._chessboard_dict['off_board_black'].append(black_hunter)
 
         self._chessboard_dict['taken_white'] = []
