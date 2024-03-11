@@ -75,7 +75,7 @@ class ChessVar:
         """
         if self.get_game_state() != 'UNFINISHED':
             return False
-        elif not self.valid_move(current_position, new_position):
+        if not self.valid_move(current_position, new_position):
             return False
         else:
             # print('move from',current_position,'to',new_position,'complete')
@@ -93,24 +93,24 @@ class ChessVar:
         new_position_obj = BoardSquare(new_position_str)
 
         if not current_piece:
-            # print('no piece at',current_position_str)
+            print('Turn:', self._turn, 'no piece at', current_position_str)
             return False
-        elif current_piece.get_color() != self.get_turn():
-            # print('not',current_piece.get_color(),'turn')
+        if current_piece.get_color() != self.get_turn():
+            print('Turn:', self._turn, 'not', current_piece.get_color(), 'turn')
             return False
-        elif not new_position_obj.check_valid_square():
-            # print('this position is not on the board')
+        if not new_position_obj.check_valid_square():
+            print('Turn:', self._turn, 'this position is not on the board')
             return False  # new position is not a valid square
-        elif self._chessboard.get_chessboard_dict()[new_position_str]:
+        if self._chessboard.get_chessboard_dict()[new_position_str]:
             new_piece_color = self._chessboard.get_chessboard_dict()[new_position_str].get_color()
             if new_piece_color == current_piece.get_color():
-                # print('cannot take own piece')
+                print('Turn:', self._turn, 'cannot take own piece')
                 return False  # cannot take own piece
-        elif not current_piece.valid_moves(current_position_obj, new_position_obj):
-            # print('piece cannot move here')
+        if not current_piece.valid_moves(current_position_obj, new_position_obj):
+            print('Turn:', self._turn, 'piece cannot move here')
             return False  # piece cannot move from current to new
-        elif not self.valid_journey(current_position_obj, new_position_obj, current_piece):
-            # print('journey not valid')
+        if not self.valid_journey(current_position_obj, new_position_obj, current_piece):
+            print('Turn:', self._turn, 'journey not valid')
             return False  # other pieces are interrupting the journey
         else:
             return True
@@ -431,7 +431,7 @@ class Rook(ChessPiece):
 
         if column_difference == 0 and row_difference == 0:
             return False
-        elif new_column == current_column or new_row == current_row:
+        if new_column == current_column or new_row == current_row:
             return True
         else:
             return False
@@ -491,7 +491,7 @@ class Bishop(ChessPiece):
 
         if column_difference == 0 and row_difference == 0:
             return False
-        elif column_difference == row_difference:
+        if column_difference == row_difference:
             return True
         else:
             return False
@@ -522,9 +522,9 @@ class Queen(ChessPiece):
 
         if column_difference == 0 and row_difference == 0:
             return False
-        elif new_column == current_column or new_row == current_row:
+        if new_column == current_column or new_row == current_row:
             return True
-        elif column_difference == row_difference:
+        if column_difference == row_difference:
             return True
         else:
             return False
@@ -555,7 +555,7 @@ class King(ChessPiece):
 
         if column_difference > 1 or row_difference > 1:
             return False
-        elif column_difference == 0 and row_difference == 0:
+        if column_difference == 0 and row_difference == 0:
             return False
         else:
             return True
@@ -590,13 +590,13 @@ class Pawn(ChessPiece):
             return False
 
         # if there is a piece diagonal one, the pawn can move and take it
-        elif column_difference == 1 and self._chessboard.get_chessboard_dict()[new_square.get_square()]:
-            if self._color == 'white' and row_difference == 1:
+        if column_difference == 1 and self._chessboard.get_chessboard_dict()[new_square.get_square()]:
+            if self.get_color() == 'white' and row_difference == 1:
                 return True
-            if self._color == 'black' and row_difference == -1:
+            if self.get_color() == 'black' and row_difference == -1:
                 return True
 
-        elif self.get_color() == 'white':
+        if self.get_color() == 'white':
             if current_square.get_row() == 2:
                 if column_difference == 0 and (row_difference == 1 or row_difference == 2):
                     return True
